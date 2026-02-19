@@ -8,7 +8,7 @@ const router = Router();
 router.get('/', authenticate, requireRole('admin'), async (_req, res, next) => {
   try {
     const { rows } = await pool.query(
-      'SELECT id, email, display_name, avatar_url, bio, role, is_banned, created_at, updated_at FROM users ORDER BY created_at DESC'
+      'SELECT id, email, display_name, avatar_url, bio, role, is_banned, created_at FROM users ORDER BY created_at DESC'
     );
     res.json(rows);
   } catch (err) {
@@ -52,7 +52,7 @@ router.put('/:id', authenticate, async (req, res, next) => {
     const { rows } = await pool.query(
       `UPDATE users SET display_name = COALESCE($1, display_name), avatar_url = $2, bio = $3
        WHERE id = $4
-       RETURNING id, email, display_name, avatar_url, bio, role, is_banned, created_at, updated_at`,
+       RETURNING id, email, display_name, avatar_url, bio, role, is_banned, created_at`,
       [display_name, avatar_url || null, bio || null, req.params.id]
     );
     if (rows.length === 0) return res.status(404).json({ error: 'User not found' });

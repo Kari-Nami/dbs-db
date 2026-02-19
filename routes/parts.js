@@ -8,7 +8,7 @@ const router = Router();
 router.get('/', async (req, res, next) => {
   try {
     const { category_id } = req.query;
-    let query = 'SELECT p.*, pc.name as category_name, pc.slug as category_slug FROM parts p JOIN part_categories pc ON p.category_id = pc.id WHERE p.is_active = true';
+    let query = 'SELECT p.*, pc.category_name FROM parts p JOIN part_categories pc ON p.category_id = pc.id WHERE p.is_active = true';
     const params = [];
 
     if (category_id) {
@@ -16,7 +16,7 @@ router.get('/', async (req, res, next) => {
       query += ` AND p.category_id = $${params.length}`;
     }
 
-    query += ' ORDER BY pc.sort_order, p.name';
+    query += ' ORDER BY pc.category_name, p.name';
     const { rows } = await pool.query(query, params);
     res.json(rows);
   } catch (err) {
@@ -28,9 +28,9 @@ router.get('/', async (req, res, next) => {
 router.get('/all', authenticate, requireRole('admin'), async (_req, res, next) => {
   try {
     const { rows } = await pool.query(
-      `SELECT p.*, pc.name as category_name, pc.slug as category_slug
+      `SELECT p.*, pc.category_name
        FROM parts p JOIN part_categories pc ON p.category_id = pc.id
-       ORDER BY pc.sort_order, p.name`
+       ORDER BY pc.category_name, p.name`
     );
     res.json(rows);
   } catch (err) {
@@ -42,7 +42,7 @@ router.get('/all', authenticate, requireRole('admin'), async (_req, res, next) =
 router.get('/:id', async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      `SELECT p.*, pc.name as category_name, pc.slug as category_slug
+      `SELECT p.*, pc.category_name
        FROM parts p JOIN part_categories pc ON p.category_id = pc.id
        WHERE p.id = $1`,
       [req.params.id]

@@ -8,8 +8,8 @@ const router = Router();
 
 router.get('/', async (req, res, next) => {
   try {
-    const { status, build_type, user_id } = req.query;
-    let query = 'SELECT b.*, u.display_name as user_display_name FROM builds b JOIN users u ON b.user_id = u.id WHERE 1=1';
+    const { status, build_type, creator_id } = req.query;
+    let query = 'SELECT b.*, u.display_name as creator_display_name FROM builds b JOIN users u ON b.creator_id = u.id WHERE 1=1';
     const params = [];
 
     if (status) {
@@ -20,9 +20,9 @@ router.get('/', async (req, res, next) => {
       params.push(build_type);
       query += ` AND b.build_type = $${params.length}`;
     }
-    if (user_id) {
-      params.push(user_id);
-      query += ` AND b.user_id = $${params.length}`;
+    if (creator_id) {
+      params.push(creator_id);
+      query += ` AND b.creator_id = $${params.length}`;
     }
 
     query += ' ORDER BY b.created_at DESC';
@@ -37,8 +37,8 @@ router.get('/', async (req, res, next) => {
 router.get('/:id', async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      `SELECT b.*, u.display_name as user_display_name, u.role as user_role
-       FROM builds b JOIN users u ON b.user_id = u.id
+      `SELECT b.*, u.display_name as creator_display_name, u.role as creator_role
+       FROM builds b JOIN users u ON b.creator_id = u.id
        WHERE b.id = $1`,
       [req.params.id]
     );
@@ -54,12 +54,12 @@ router.get('/:id/parts', async (req, res, next) => {
   try {
     const { rows } = await pool.query(
       `SELECT bp.*, p.name as part_name, p.brand, p.model, p.specifications, p.price, p.image_url,
-              pc.id as category_id, pc.name as category_name, pc.slug as category_slug
+              pc.id as category_id, pc.category_name
        FROM build_parts bp
        JOIN parts p ON bp.part_id = p.id
        JOIN part_categories pc ON p.category_id = pc.id
        WHERE bp.build_id = $1
-       ORDER BY pc.sort_order`,
+       ORDER BY pc.category_name`,
       [req.params.id]
     );
 
@@ -82,7 +82,7 @@ router.get('/:id/parts', async (req, res, next) => {
       category: {
         id: row.category_id,
         name: row.category_name,
-        slug: row.category_slug,
+        slug: row.category_name.toLowerCase().replace(/\s+/g, '-'),
       },
     }));
 
@@ -111,7 +111,7 @@ router.post('/', authenticate, async (req, res, next) => {
     }
 
     const { rows } = await client.query(
-      `INSERT INTO builds (user_id, title, description, purpose, total_price, status, build_type, availability_status, image_urls, specs_summary)
+      `INSERT INTO builds (creator_id, title, description, purpose, total_price, status, build_type, availability_status, image_urls, specs_summary)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING *`,
       [req.user.id, title, description || null, purpose || null, total_price || 0, status || 'draft', build_type || 'personal', availability_status || null, image_urls || '{}', specs_summary || null]
@@ -160,7 +160,7 @@ router.put('/:id', authenticate, async (req, res, next) => {
       await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Build not found' });
     }
-    if (existing[0].user_id !== req.user.id && req.user.role !== 'admin') {
+    if (existing[0].creator_id !== req.user.id && req.user.role !== 'admin') {
       await client.query('ROLLBACK');
       return res.status(403).json({ error: 'Not authorized' });
     }
@@ -217,9 +217,9 @@ router.put('/:id', authenticate, async (req, res, next) => {
 
 router.delete('/:id', authenticate, async (req, res, next) => {
   try {
-    const { rows } = await pool.query('SELECT user_id FROM builds WHERE id = $1', [req.params.id]);
+    const { rows } = await pool.query('SELECT creator_id FROM builds WHERE id = $1', [req.params.id]);
     if (rows.length === 0) return res.status(404).json({ error: 'Build not found' });
-    if (rows[0].user_id !== req.user.id && req.user.role !== 'admin') {
+    if (rows[0].creator_id !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({ error: 'Not authorized' });
     }
     await pool.query('DELETE FROM builds WHERE id = $1', [req.params.id]);
@@ -235,7 +235,7 @@ router.delete('/:id', authenticate, async (req, res, next) => {
 router.get('/:id/ratings', async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      `SELECT r.*, u.display_name as user_display_name
+      `SELECT r.*, u.display_name as creator_display_name
        FROM ratings r JOIN users u ON r.user_id = u.id
        WHERE r.build_id = $1 ORDER BY r.created_at DESC`,
       [req.params.id]
@@ -326,7 +326,7 @@ router.post('/:id/comments', authenticate, async (req, res, next) => {
 
     
     const { rows: full } = await pool.query(
-      `SELECT c.*, u.display_name as user_display_name
+      `SELECT c.*, u.display_name as creator_display_name
        FROM comments c JOIN users u ON c.user_id = u.id WHERE c.id = $1`,
       [rows[0].id]
     );
@@ -420,13 +420,12 @@ async function runCompatibilityCheck(dbClient, partsMap) {
 
   
   const { rows: partRows } = await dbClient.query(
-    `SELECT p.*, pc.slug as category_slug
+    `SELECT p.*, LOWER(REPLACE(pc.category_name, ' ', '-')) as category_slug
      FROM parts p JOIN part_categories pc ON p.category_id = pc.id
      WHERE p.id = ANY($1)`,
     [partIds]
   );
 
-  
   const selectedParts = {};
   for (const [slug, partId] of Object.entries(partsMap)) {
     const part = partRows.find(p => p.id === partId);

@@ -29,8 +29,7 @@ CREATE TABLE users (
   bio TEXT,
   role user_role NOT NULL DEFAULT 'user',
   is_banned BOOLEAN NOT NULL DEFAULT false,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_users_email ON users(email);
@@ -48,11 +47,9 @@ CREATE TABLE builder_profiles (
   years_of_experience INTEGER,
   specialization VARCHAR(255),
   avg_rating DECIMAL(3,2) NOT NULL DEFAULT 0.00,
-  avg_response_time_hrs DECIMAL(6,2),
   completed_builds INTEGER NOT NULL DEFAULT 0,
   is_verified BOOLEAN NOT NULL DEFAULT true,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- 3. builder_applications
@@ -70,8 +67,7 @@ CREATE TABLE builder_applications (
   status application_status NOT NULL DEFAULT 'pending',
   admin_notes TEXT,
   reviewed_by UUID REFERENCES users(id),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  reviewed_at TIMESTAMPTZ
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_builder_applications_user ON builder_applications(user_id);
@@ -80,11 +76,9 @@ CREATE INDEX idx_builder_applications_status ON builder_applications(status);
 -- 4. part_categories
 CREATE TABLE part_categories (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(50) UNIQUE NOT NULL,
-  slug VARCHAR(50) UNIQUE NOT NULL,
+  category_name VARCHAR(50) UNIQUE NOT NULL,
   description TEXT,
-  icon VARCHAR(50),
-  sort_order INTEGER NOT NULL DEFAULT 0
+  icon VARCHAR(50)
 );
 
 -- 5. parts
@@ -99,8 +93,7 @@ CREATE TABLE parts (
   image_url TEXT,
   is_active BOOLEAN NOT NULL DEFAULT true,
   created_by UUID NOT NULL REFERENCES users(id),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_parts_category ON parts(category_id);
@@ -109,7 +102,7 @@ CREATE INDEX idx_parts_active ON parts(is_active);
 -- 6. builds
 CREATE TABLE builds (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  creator_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   title VARCHAR(200) NOT NULL,
   description TEXT,
   purpose VARCHAR(100),
@@ -122,11 +115,10 @@ CREATE TABLE builds (
   like_count INTEGER NOT NULL DEFAULT 0,
   rating_avg DECIMAL(3,2) NOT NULL DEFAULT 0.00,
   rating_count INTEGER NOT NULL DEFAULT 0,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_builds_user ON builds(user_id);
+CREATE INDEX idx_builds_creator ON builds(creator_id);
 CREATE INDEX idx_builds_status ON builds(status);
 CREATE INDEX idx_builds_type ON builds(build_type);
 
@@ -152,8 +144,7 @@ CREATE TABLE build_requests (
   notes TEXT,
   preferred_builder_id UUID REFERENCES users(id),
   status request_status NOT NULL DEFAULT 'open',
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_build_requests_user ON build_requests(user_id);
@@ -199,7 +190,6 @@ CREATE TABLE ratings (
   score INTEGER NOT NULL CHECK (score >= 1 AND score <= 5),
   review_text TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (user_id, build_id)
 );
 
@@ -212,8 +202,7 @@ CREATE TABLE comments (
   build_id UUID NOT NULL REFERENCES builds(id) ON DELETE CASCADE,
   parent_comment_id UUID REFERENCES comments(id) ON DELETE CASCADE,
   content TEXT NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX idx_comments_build ON comments(build_id);
@@ -240,25 +229,5 @@ CREATE TABLE compatibility_rules (
   is_active BOOLEAN NOT NULL DEFAULT true,
   rule_config JSONB NOT NULL,
   message_template TEXT NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-
--- ─── Trigger: auto-update updated_at ─────────────────────────────
-
-CREATE OR REPLACE FUNCTION update_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = now();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at();
-CREATE TRIGGER trg_builder_profiles_updated_at BEFORE UPDATE ON builder_profiles FOR EACH ROW EXECUTE FUNCTION update_updated_at();
-CREATE TRIGGER trg_parts_updated_at BEFORE UPDATE ON parts FOR EACH ROW EXECUTE FUNCTION update_updated_at();
-CREATE TRIGGER trg_builds_updated_at BEFORE UPDATE ON builds FOR EACH ROW EXECUTE FUNCTION update_updated_at();
-CREATE TRIGGER trg_build_requests_updated_at BEFORE UPDATE ON build_requests FOR EACH ROW EXECUTE FUNCTION update_updated_at();
-CREATE TRIGGER trg_ratings_updated_at BEFORE UPDATE ON ratings FOR EACH ROW EXECUTE FUNCTION update_updated_at();
-CREATE TRIGGER trg_comments_updated_at BEFORE UPDATE ON comments FOR EACH ROW EXECUTE FUNCTION update_updated_at();
-CREATE TRIGGER trg_compatibility_rules_updated_at BEFORE UPDATE ON compatibility_rules FOR EACH ROW EXECUTE FUNCTION update_updated_at();

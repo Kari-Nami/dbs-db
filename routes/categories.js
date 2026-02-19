@@ -6,7 +6,7 @@ const router = Router();
 
 router.get('/', async (_req, res, next) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM part_categories ORDER BY sort_order');
+    const { rows } = await pool.query('SELECT * FROM part_categories ORDER BY category_name');
     res.json(rows);
   } catch (err) {
     next(err);

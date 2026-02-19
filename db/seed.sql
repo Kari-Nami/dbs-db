@@ -9,21 +9,21 @@ INSERT INTO users (id, email, password_hash, display_name, avatar_url, bio, role
 
 -- ─── Builder Profiles ────────────────────────────────────────────
 
-INSERT INTO builder_profiles (id, user_id, business_name, registration_number, address, website, portfolio_url, years_of_experience, specialization, avg_rating, avg_response_time_hrs, completed_builds, is_verified) VALUES
-  ('b0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000004', 'TechPro Builds', 'BIZ-2024-001', '123 Tech Street, San Jose, CA', 'https://techprobuilds.example.com', 'https://techprobuilds.example.com/portfolio', 10, 'Gaming PCs, Workstations', 4.50, 2.50, 150, true),
-  ('b0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000005', 'ElitePC Workshop', 'BIZ-2024-002', '456 Builder Ave, Austin, TX', 'https://elitepc.example.com', NULL, 7, 'Custom Gaming, RGB Builds', 4.20, 4.00, 85, true);
+INSERT INTO builder_profiles (id, user_id, business_name, registration_number, address, website, portfolio_url, years_of_experience, specialization, avg_rating, completed_builds, is_verified) VALUES
+  ('b0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000004', 'TechPro Builds', 'BIZ-2024-001', '123 Tech Street, San Jose, CA', 'https://techprobuilds.example.com', 'https://techprobuilds.example.com/portfolio', 10, 'Gaming PCs, Workstations', 4.50, 150, true),
+  ('b0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000005', 'ElitePC Workshop', 'BIZ-2024-002', '456 Builder Ave, Austin, TX', 'https://elitepc.example.com', NULL, 7, 'Custom Gaming, RGB Builds', 4.20, 85, true);
 
 -- ─── Part Categories ─────────────────────────────────────────────
 
-INSERT INTO part_categories (id, name, slug, description, icon, sort_order) VALUES
-  ('c0000000-0000-0000-0000-000000000001', 'CPU', 'cpu', 'Central Processing Unit', 'cpu', 1),
-  ('c0000000-0000-0000-0000-000000000002', 'GPU', 'gpu', 'Graphics Processing Unit', 'gpu', 2),
-  ('c0000000-0000-0000-0000-000000000003', 'Motherboard', 'motherboard', 'Motherboard / Mainboard', 'motherboard', 3),
-  ('c0000000-0000-0000-0000-000000000004', 'RAM', 'ram', 'Memory', 'ram', 4),
-  ('c0000000-0000-0000-0000-000000000005', 'Storage', 'storage', 'SSD / HDD Storage', 'storage', 5),
-  ('c0000000-0000-0000-0000-000000000006', 'PSU', 'psu', 'Power Supply Unit', 'psu', 6),
-  ('c0000000-0000-0000-0000-000000000007', 'Case', 'case', 'PC Case / Chassis', 'case', 7),
-  ('c0000000-0000-0000-0000-000000000008', 'Cooling', 'cooling', 'CPU Cooler', 'cooling', 8);
+INSERT INTO part_categories (id, category_name, description, icon) VALUES
+  ('c0000000-0000-0000-0000-000000000001', 'CPU', 'Central Processing Unit', 'cpu'),
+  ('c0000000-0000-0000-0000-000000000002', 'GPU', 'Graphics Processing Unit', 'gpu'),
+  ('c0000000-0000-0000-0000-000000000003', 'Motherboard', 'Motherboard / Mainboard', 'motherboard'),
+  ('c0000000-0000-0000-0000-000000000004', 'RAM', 'Memory', 'ram'),
+  ('c0000000-0000-0000-0000-000000000005', 'Storage', 'SSD / HDD Storage', 'storage'),
+  ('c0000000-0000-0000-0000-000000000006', 'PSU', 'Power Supply Unit', 'psu'),
+  ('c0000000-0000-0000-0000-000000000007', 'Case', 'PC Case / Chassis', 'case'),
+  ('c0000000-0000-0000-0000-000000000008', 'Cooling', 'CPU Cooler', 'cooling');
 
 -- ─── Parts ───────────────────────────────────────────────────────
 
@@ -158,7 +158,7 @@ INSERT INTO parts (id, category_id, name, brand, model, specifications, price, i
 
 -- ─── Builds ──────────────────────────────────────────────────────
 
-INSERT INTO builds (id, user_id, title, description, purpose, total_price, status, build_type, availability_status, image_urls, specs_summary, like_count, rating_avg, rating_count) VALUES
+INSERT INTO builds (id, creator_id, title, description, purpose, total_price, status, build_type, availability_status, image_urls, specs_summary, like_count, rating_avg, rating_count) VALUES
   ('e0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000002', 'Ultimate Gaming Rig', 'High-end gaming build for 1440p gaming at max settings', 'Gaming', 1649.93, 'published', 'personal', NULL, '{}', NULL, 3, 4.50, 2),
   ('e0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000003', 'Content Creator Workstation', 'Powerful workstation for video editing and 3D rendering', 'Content Creation', 2519.93, 'published', 'personal', NULL, '{}', NULL, 1, 5.00, 1),
   ('e0000000-0000-0000-0000-000000000003', 'a0000000-0000-0000-0000-000000000004', 'ProGamer Elite Build', 'Pre-built high-performance gaming PC ready to ship. Professionally assembled with cable management and stress testing included.', 'Gaming', 1899.93, 'published', 'showcase', 'available', '{}', 'Ryzen 9 7950X / RTX 4080 / 64GB DDR5 / 2TB NVMe', 5, 4.80, 3);
