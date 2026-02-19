@@ -331,47 +331,9 @@ Rules are stored in the database and can be toggled, updated, or extended by adm
 
 ## Database Schema
 
-14 tables with UUID primary keys, enum types, and automatic `updated_at` triggers:
+14 tables with UUID primary keys:
 
-```
-┌──────────────────────┐     ┌──────────────────────┐
-│       users          │     │  builder_profiles     │
-│ ──────────────────── │     │ ──────────────────── │
-│ id, email, password  │◄───►│ user_id, business_name│
-│ display_name, role   │     │ specialization, etc.  │
-│ is_banned            │     └──────────────────────┘
-└──────┬───────────────┘
-       │
-       │  ┌──────────────────────┐     ┌──────────────────┐
-       ├─►│      builds          │◄───►│   build_parts    │
-       │  │ ──────────────────── │     │ ──────────────── │
-       │  │ title, status,       │     │ build_id, part_id│
-       │  │ build_type, price    │     └────────┬─────────┘
-       │  └──────┬───────────────┘              │
-       │         │                     ┌────────▼─────────┐
-       │         ├─► ratings           │      parts       │
-       │         ├─► comments          │ ──────────────── │
-       │         ├─► likes             │ name, brand,     │
-       │         │                     │ specifications,  │
-       │  ┌──────▼───────────────┐     │ price, category  │
-       ├─►│   build_requests     │     └────────┬─────────┘
-       │  │ ──────────────────── │              │
-       │  │ budget, status       │     ┌────────▼─────────┐
-       │  └──────┬───────────────┘     │ part_categories   │
-       │         │                     │ ──────────────── │
-       │  ┌──────▼───────────────┐     │ name, slug       │
-       ├─►│   builder_offers     │     └──────────────────┘
-       │  │ ──────────────────── │
-       │  │ fee, message, status │
-       │  └──────────────────────┘
-       │
-       ├─► builder_applications       ┌──────────────────────┐
-       │                              │ compatibility_rules   │
-       ├─► showcase_inquiries         │ ──────────────────── │
-                                      │ rule_config (JSONB)   │
-                                      │ severity, is_active   │
-                                      └──────────────────────┘
-```
+[placeholder image.png]
 
 ### Enum Types
 
