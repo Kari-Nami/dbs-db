@@ -26,7 +26,8 @@ A RESTful backend API for **Build Me a PC**, a platform connecting PC enthusiast
 - [Compatibility Engine](#compatibility-engine)
 - [Database Schema](#database-schema)
 - [Project Structure](#project-structure)
-
+- [Error Handling](#error-handling)
+- [Contributors](#contributors)
 ---
 
 ## Overview
@@ -47,6 +48,7 @@ A RESTful backend API for **Build Me a PC**, a platform connecting PC enthusiast
 | Framework      | **Express.js** v4                             |
 | Database       | **PostgreSQL** (via `pg`)                     |
 | Authentication | **JWT** (`jsonwebtoken`) + **bcrypt**         |
+| CORS           | **cors**                                      |
 | Environment    | **dotenv**                                    |
 | Dev Tools      | **nodemon**                                   |
 
@@ -221,20 +223,20 @@ Base URL: `/api`
 
 | Method | Endpoint                    | Auth     | Description                              |
 | ------ | --------------------------- | -------- | ---------------------------------------- |
-| GET    | `/builds`                   | —        | List builds (filter by `status`, `build_type`, `user_id`) |
+| GET    | `/builds`                   | —        | List builds (filter by `status`, `build_type`, `creator_id`) |
 | GET    | `/builds/:id`               | —        | Get build by ID                          |
-| GET    | `/builds/:id/parts`         | —        | Get all parts in a build                 |
-| POST   | `/builds`                   | Required | Create a build (with compatibility check)|
-| PUT    | `/builds/:id`               | Owner/Admin | Update a build                        |
+| GET    | `/builds/:id/parts`         | —        | Get all parts in a build (nested `part` & `category` objects) |
+| POST   | `/builds`                   | Required | Create a build with compatibility check (returns `{ build, warnings }`) |
+| PUT    | `/builds/:id`               | Owner/Admin | Update a build (re-runs compatibility, returns `{ build, warnings }`) |
 | DELETE | `/builds/:id`               | Owner/Admin | Delete a build                        |
 | GET    | `/builds/:id/ratings`       | —        | Get all ratings for a build              |
 | GET    | `/builds/:id/ratings/mine`  | Required | Get your rating for a build              |
-| POST   | `/builds/:id/ratings`       | Required | Rate a build (1–5 score)                 |
+| POST   | `/builds/:id/ratings`       | Required | Rate a build (1–5 score, updates `rating_avg`/`rating_count`) |
 | GET    | `/builds/:id/comments`      | —        | Get all comments on a build              |
-| POST   | `/builds/:id/comments`      | Required | Add a comment (supports threaded replies)|
+| POST   | `/builds/:id/comments`      | Required | Add a comment (supports threaded replies, returns `creator_display_name`) |
 | GET    | `/builds/:id/likes`         | —        | Get all likes on a build                 |
 | GET    | `/builds/:id/likes/check`   | Required | Check if you liked a build               |
-| POST   | `/builds/:id/likes/toggle`  | Required | Toggle like on a build                   |
+| POST   | `/builds/:id/likes/toggle`  | Required | Toggle like on a build (updates `like_count`) |
 
 > **Build Types:** `personal` (user-created) | `showcase` (builder pre-built)  
 > **Build Statuses:** `draft` | `published`
@@ -245,7 +247,7 @@ Base URL: `/api`
 | ------ | ---------------- | -------- | --------------------------------------------- |
 | GET    | `/requests`      | —        | List requests (filter by `status`, `user_id`, `build_id`) |
 | GET    | `/requests/:id`  | —        | Get request by ID                             |
-| POST   | `/requests`      | Required | Create a build request                        |
+| POST   | `/requests`      | Required | Create a build request (with `budget`, `purpose`, `notes`, `preferred_builder_id`) |
 | PUT    | `/requests/:id`  | Owner/Admin | Update a build request                     |
 
 > **Request Statuses:** `open` → `claimed` → `in_progress` → `completed` | `cancelled`
@@ -254,9 +256,9 @@ Base URL: `/api`
 
 | Method | Endpoint               | Auth    | Description                                |
 | ------ | ---------------------- | ------- | ------------------------------------------ |
-| GET    | `/offers`              | Required | List offers (filter by `request_id`, `builder_id`) |
-| POST   | `/offers`              | Builder | Submit an offer for a build request        |
-| POST   | `/offers/:id/accept`   | Request Owner/Admin | Accept an offer (rejects others) |
+| GET    | `/offers`              | Required | List offers with builder profile data (filter by `request_id`, `builder_id`) |
+| POST   | `/offers`              | Builder | Submit an offer (`fee`, `message`, `contact_info`, optional `suggested_build_id`) |
+| POST   | `/offers/:id/accept`   | Request Owner/Admin | Accept an offer (auto-rejects others, sets request to `claimed`) |
 
 > **Offer Statuses:** `pending` → `accepted` | `rejected`
 
@@ -274,9 +276,9 @@ Base URL: `/api`
 | GET    | `/applications`             | Admin    | List all applications (filter by `status`, `user_id`) |
 | GET    | `/applications/mine`        | Required | Get your own applications                |
 | POST   | `/applications`             | Required | Submit a builder application             |
-| PUT    | `/applications/:id/review`  | Admin    | Approve or reject an application         |
+| PUT    | `/applications/:id/review`  | Admin    | Approve or reject (sets `reviewed_at` timestamp) |
 
-> On approval, the user's role is upgraded to `builder` and a builder profile is created automatically.
+> On approval, the user's role is upgraded to `builder` and a builder profile is created automatically (skipped if one already exists).
 
 ### Compatibility
 
@@ -331,9 +333,9 @@ Rules are stored in the database and can be toggled, updated, or extended by adm
 
 ## Database Schema
 
-14 tables with UUID primary keys:
+The schema uses `DROP SCHEMA public CASCADE; CREATE SCHEMA public;` for clean resets, then creates all types and 14 tables with UUID primary keys:
 
-[placeholder image.png]
+![ERD](placeholder-image.png)
 
 ### Enum Types
 
@@ -398,3 +400,20 @@ The global error handler catches all errors and returns consistent JSON response
 | Duplicate resource       | 409    | `{ error: "Resource already exists" }`|
 | FK constraint violation  | 400    | `{ error: "Referenced resource not found" }`|
 | Internal error           | 500    | `{ error: "Internal server error" }`  |
+
+---
+
+## Contributors
+
+This is a university project for **CSX3006 Database Systems** course, developed by a team of 3 students:
+
+### Team Members
+
+| Name                   | Student ID | GitHub Username (Profile)                   |
+|------------------------|------------|---------------------------------------------|
+| Min Khaung Kyaw Swar   | 6712164    | [sasta-kro](github.com/sasta-kro)           |
+| Sai Aike Shwe Tun Aung | 6712122    | [minkhaung-mkks](github.com/minkhaung-mkks) |
+| Ekaterina Kazakova     | 6720065    | [Kari-Nami](github.com/Kari-Nami)           |
+
+---
+
