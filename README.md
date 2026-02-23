@@ -226,8 +226,8 @@ Base URL: `/api`
 | GET    | `/builds`                   | —        | List builds (filter by `status`, `build_type`, `creator_id`) |
 | GET    | `/builds/:id`               | —        | Get build by ID                          |
 | GET    | `/builds/:id/parts`         | —        | Get all parts in a build (nested `part` & `category` objects) |
-| POST   | `/builds`                   | Required | Create a build with compatibility check (returns `{ build, warnings }`) |
-| PUT    | `/builds/:id`               | Owner/Admin | Update a build (re-runs compatibility, returns `{ build, warnings }`) |
+| POST   | `/builds`                   | Required | Create a build with compatibility check; requires `cpu`, `motherboard`, `ram`, `psu`, `case` (returns `{ build, warnings }`) |
+| PUT    | `/builds/:id`               | Owner/Admin | Update a build (re-runs compatibility and required parts validation, returns `{ build, warnings }`) |
 | DELETE | `/builds/:id`               | Owner/Admin | Delete a build                        |
 | GET    | `/builds/:id/ratings`       | —        | Get all ratings for a build              |
 | GET    | `/builds/:id/ratings/mine`  | Required | Get your rating for a build              |
@@ -276,7 +276,7 @@ Base URL: `/api`
 | GET    | `/applications`             | Admin    | List all applications (filter by `status`, `user_id`) |
 | GET    | `/applications/mine`        | Required | Get your own applications                |
 | POST   | `/applications`             | Required | Submit a builder application             |
-| PUT    | `/applications/:id/review`  | Admin    | Approve or reject (sets `reviewed_at` timestamp) |
+| PUT    | `/applications/:id/review`  | Admin    | Approve or reject (sets `reviewed_by` to admin) |
 
 > On approval, the user's role is upgraded to `builder` and a builder profile is created automatically (skipped if one already exists).
 
@@ -286,7 +286,9 @@ Base URL: `/api`
 | ------ | ----------------------- | ----- | ------------------------------------- |
 | POST   | `/compatibility/check`  | —     | Run compatibility check on a parts map|
 | GET    | `/compatibility/rules`  | Admin | List all compatibility rules          |
+| POST   | `/compatibility/rules`  | Admin | Create a new compatibility rule       |
 | PUT    | `/compatibility/rules/:id` | Admin | Update a compatibility rule        |
+| DELETE | `/compatibility/rules/:id` | Admin | Delete a compatibility rule        |
 
 ### Stats & Health
 
@@ -396,6 +398,8 @@ The global error handler catches all errors and returns consistent JSON response
 | Invalid/expired token    | 401    | `{ error: "Invalid or expired token" }`|
 | Insufficient permissions | 403    | `{ error: "Insufficient permissions" }`|
 | Banned account login     | 403    | `{ error: "This account has been banned" }` |
+| Missing required parts   | 400    | `{ error: "Build must include all required parts", missing_parts: [...] }` |
+| Compatibility errors     | 400    | `{ error: "Compatibility errors", issues: [...] }` |
 | Resource not found       | 404    | `{ error: "<Resource> not found" }`   |
 | Duplicate resource       | 409    | `{ error: "Resource already exists" }`|
 | FK constraint violation  | 400    | `{ error: "Referenced resource not found" }`|
