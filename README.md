@@ -8,7 +8,8 @@ A RESTful backend API for **Build Me a PC**, a platform connecting PC enthusiast
 - [Tech Stack](#tech-stack)
 - [Getting Started](#getting-started)
 - [Environment Variables](#environment-variables)
-- [Database](#database)
+- [Database](#database) 
+  - [Database Schema](#database-schema)  $\space$   (ERD is here)
 - [Authentication](#authentication)
 - [User Roles & Permissions](#user-roles--permissions)
 - [API Endpoints](#api-endpoints)
@@ -337,7 +338,7 @@ Rules are stored in the database and can be toggled, updated, or extended by adm
 
 The schema uses `DROP SCHEMA public CASCADE; CREATE SCHEMA public;` for clean resets, then creates all types and 14 tables with UUID primary keys:
 
-![ERD](placeholder-image.png)
+![ERD](readmeResources/BuildMeAPC_ERD_CrowsFoot_Model_transparent.png)
 
 ### Enum Types
 
